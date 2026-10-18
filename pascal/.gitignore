@@ -1,0 +1,8 @@
+.build*/
+out/
+private/
+*.rom
+*.bin
+*.zip
+*.mmio.xz
+__pycache__/
