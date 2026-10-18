@@ -75,6 +75,16 @@ enum gp107_status gp107_decode_boot0(uint32_t raw, struct gp107_chip *o)
     return o->chipset == GP107_CHIPSET ? GP107_OK : GP107_NOT_TARGET;
 }
 
+enum gp107_status gp107_decode_ptimer(uint32_t high_before, uint32_t low,
+                                      uint32_t high_after, uint64_t *ticks)
+{
+    if (!ticks) return GP107_ARGUMENT;
+    *ticks = 0;
+    if (high_before != high_after) return GP107_UNSTABLE_SNAPSHOT;
+    *ticks = ((uint64_t)high_before << 32) | low;
+    return GP107_OK;
+}
+
 enum gp107_status gp107_decode_rom(const uint8_t *p, size_t n, struct gp107_rom *o)
 {
     if (!o) return GP107_ARGUMENT;
@@ -133,6 +143,7 @@ const char *gp107_status_name(enum gp107_status s)
     case GP107_BAD_CHECKSUM: return "bad-checksum";
     case GP107_IMAGE_LIMIT: return "image-limit";
     case GP107_UNAVAILABLE: return "device-unavailable";
+    case GP107_UNSTABLE_SNAPSHOT: return "unstable-ptimer-snapshot";
     }
     return "unknown-error";
 }

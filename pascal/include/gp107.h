@@ -15,7 +15,8 @@ extern "C" {
 enum gp107_status {
     GP107_OK, GP107_ARGUMENT, GP107_SHORT_INPUT, GP107_NOT_TARGET,
     GP107_BAD_HEADER, GP107_BAD_PCIR, GP107_TRUNCATED_ROM,
-    GP107_BAD_CHECKSUM, GP107_IMAGE_LIMIT, GP107_UNAVAILABLE
+    GP107_BAD_CHECKSUM, GP107_IMAGE_LIMIT, GP107_UNAVAILABLE,
+    GP107_UNSTABLE_SNAPSHOT
 };
 
 struct gp107_bar {
@@ -50,6 +51,7 @@ struct gp107_rom {
 /* Pure decoders: no allocation, IO, callbacks or device writes. */
 enum gp107_status gp107_decode_pci(const uint8_t *, size_t, struct gp107_pci *);
 enum gp107_status gp107_decode_boot0(uint32_t, struct gp107_chip *);
+enum gp107_status gp107_decode_ptimer(uint32_t, uint32_t, uint32_t, uint64_t *);
 enum gp107_status gp107_decode_rom(const uint8_t *, size_t, struct gp107_rom *);
 const char *gp107_status_name(enum gp107_status);
 

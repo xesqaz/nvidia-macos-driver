@@ -27,6 +27,7 @@ static void rom_fixture(uint8_t *p, unsigned type, unsigned last)
 int main(void)
 {
     uint8_t p[256],r[1024]; struct gp107_pci pci; struct gp107_chip chip; struct gp107_rom rom;
+    uint64_t ptimer=UINT64_MAX;
     pci_fixture(p);
     assert(gp107_decode_pci(p,sizeof p,&pci)==GP107_OK);
     assert(pci.bars[1].address==UINT64_C(0x1e0000000) && pci.bars[2].upper);
@@ -41,6 +42,10 @@ int main(void)
     assert(gp107_decode_boot0(0xffffffff,&chip)==GP107_UNAVAILABLE);
     assert(gp107_decode_boot0(0,&chip)==GP107_UNAVAILABLE);
     assert(gp107_decode_boot0(0x136000a1,&chip)==GP107_NOT_TARGET);
+    assert(gp107_decode_ptimer(0x12345678,0x9abcdef0,0x12345678,&ptimer)==GP107_OK);
+    assert(ptimer==UINT64_C(0x123456789abcdef0));
+    assert(gp107_decode_ptimer(7,0xffffffff,8,&ptimer)==GP107_UNSTABLE_SNAPSHOT && ptimer==0);
+    assert(gp107_decode_ptimer(0,0,0,NULL)==GP107_ARGUMENT);
     rom_fixture(r,0,0); rom_fixture(r+512,3,1);
     assert(gp107_decode_rom(r,sizeof r,&rom)==GP107_OK);
     assert(rom.complete && rom.has_efi_image && rom.image_count==2 && rom.chain_bytes==1024);

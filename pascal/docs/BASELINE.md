@@ -51,4 +51,4 @@ There are 107,008 trailing bytes after the last declared PCIR image. They are pr
 
 ## Next hardware acceptance result
 
-Build and test `PascalProbe` on macOS, confirm this exact PCI identity and `BOOT_0`, then proceed to a separately designed Pascal memory/firmware backend. Host parser tests and the source-only diagnostic kext do not yet establish successful macOS hardware initialisation.
+Build and test `PascalProbe` on macOS, confirm this exact PCI identity and `BOOT_0`, and check whether two read-only PTIMER samples increase. Then proceed to a separately designed Pascal memory/firmware backend. Host parser tests and the source-only diagnostic kext do not yet establish successful macOS hardware initialisation.

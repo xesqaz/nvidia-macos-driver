@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0 */
 #include <IOKit/IOService.h>
 #include <IOKit/IOMemoryDescriptor.h>
+#include <IOKit/IOLib.h>
 #include <IOKit/pci/IOPCIDevice.h>
 #include <libkern/OSByteOrder.h>
 #include <mach/mach_types.h>
@@ -30,6 +31,7 @@ private:
     bool opened_ = false;
     void cleanup();
     bool readIdentity();
+    bool readPtimer(uint64_t *ticks);
 };
 OSDefineMetaClassAndStructors(PascalProbe, IOService)
 
@@ -67,7 +69,7 @@ bool PascalProbe::readIdentity()
     if (!map_ || !map_->getVirtualAddress() || map_->getLength() < sizeof(uint32_t) ||
         map_->getPhysicalAddress() != identity.bars[0].address) return false;
 
-    // BOOT_0 is the only GPU register read in stage 0. Do not replay Linux trace writes.
+    // Read-only identity and timer sampling only. Never replay Linux trace writes.
     uint32_t boot0 = OSReadLittleInt32(reinterpret_cast<void *>(map_->getVirtualAddress()), 0);
     struct gp107_chip chip;
     status = gp107_decode_boot0(boot0, &chip);
@@ -75,14 +77,48 @@ bool PascalProbe::readIdentity()
         IOLog("PascalProbe: BOOT_0=%08x (%s)\n", boot0, gp107_status_name(status));
         return false;
     }
-    setProperty("PascalProbe-stage", "identity-only");
+
+    uint64_t ptimerFirst = 0, ptimerSecond = 0;
+    bool ptimerFirstValid = readPtimer(&ptimerFirst);
+    bool ptimerSecondValid = false;
+    if (ptimerFirstValid) {
+        IOSleep(1);
+        ptimerSecondValid = readPtimer(&ptimerSecond);
+    }
+    bool ptimerTicking = ptimerSecondValid && ptimerSecond > ptimerFirst;
+    setProperty("PascalProbe-stage", "identity-and-read-only-timer");
     setProperty("PascalProbe-pci-id", (unsigned long long)GP107_DEVICE << 16 | GP107_VENDOR, 32);
     setProperty("PascalProbe-boot0", (unsigned long long)boot0, 32);
     setProperty("PascalProbe-chipset", (unsigned long long)chip.chipset, 32);
     setProperty("PascalProbe-bar0-bytes", (unsigned long long)map_->getLength(), 64);
     setProperty("PascalProbe-acceleration", false);
-    IOLog("PascalProbe: GP107 revision %02x identified; no firmware, reset, modeset or acceleration\n", chip.revision);
+    setProperty("PascalProbe-ptimer-first-valid", ptimerFirstValid);
+    setProperty("PascalProbe-ptimer-second-valid", ptimerSecondValid);
+    setProperty("PascalProbe-ptimer-ticking", ptimerTicking);
+    if (ptimerFirstValid)
+        setProperty("PascalProbe-ptimer-first", (unsigned long long)ptimerFirst, 64);
+    if (ptimerSecondValid)
+        setProperty("PascalProbe-ptimer-second", (unsigned long long)ptimerSecond, 64);
+    if (ptimerTicking)
+        setProperty("PascalProbe-ptimer-delta", (unsigned long long)(ptimerSecond - ptimerFirst), 64);
+    IOLog("PascalProbe: GP107 revision %02x identified; PTIMER samples=%u ticking=%u; no writes, firmware, reset, modeset or acceleration\n",
+          chip.revision, ptimerFirstValid && ptimerSecondValid, ptimerTicking);
     return true;
+}
+
+bool PascalProbe::readPtimer(uint64_t *ticks)
+{
+    if (!map_ || !ticks || map_->getLength() < 0x9414) return false;
+    void *bar0 = reinterpret_cast<void *>(map_->getVirtualAddress());
+    for (unsigned attempt = 0; attempt < 8; ++attempt) {
+        uint32_t highBefore = OSReadLittleInt32(bar0, 0x9410);
+        uint32_t low = OSReadLittleInt32(bar0, 0x9400);
+        uint32_t highAfter = OSReadLittleInt32(bar0, 0x9410);
+        enum gp107_status status = gp107_decode_ptimer(highBefore, low, highAfter, ticks);
+        if (status == GP107_OK) return true;
+        if (status != GP107_UNSTABLE_SNAPSHOT) return false;
+    }
+    return false;
 }
 
 void PascalProbe::cleanup()
