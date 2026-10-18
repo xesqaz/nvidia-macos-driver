@@ -34,6 +34,8 @@
 
 У HD 4600 есть отдельное ограничение по версии ОС: [руководство OpenCore](https://dortania.github.io/OpenCore-Install-Guide/config.plist/haswell.html) указывает её поддержку до macOS 12, а [документация OCLP](https://dortania.github.io/OpenCore-Legacy-Patcher/POST-INSTALL.html) относит Haswell graphics к root patching для Sequoia и требует подходящий MetallibSupportPkg. OCLP официально поддерживает перечисленные модели Intel Mac ([список моделей](https://dortania.github.io/OpenCore-Legacy-Patcher/MODELS.html)), поэтому его работа на этой обычной PC-сборке не гарантирована. Пока Pascal backend не заработал, видеоускорение Sequoia остаётся отдельной проблемой даже при доступном экране.
 
+Установка из Windows через 1401 тоже не готовый обходной путь для одной GTX 1050: [текущая интеграция NullMoth](https://github.com/nullmoth/1401/blob/381eec6b632547419c6e80eac7352a6760f02332/p1401/nullmoth.py) отмечает только видеокарты из GSP-таблицы; в её тесте GTX 1080 Pascal явно остаётся неподдержанной. Это отдельная утилита и текущий драйвер NullMoth мы для этой карты не ставим. Если 1401 не принимает конфигурацию с GTX 1050, понадобится собственный OpenCore installer или сначала включённая и доступная для сборки Intel-графика.
+
 ## Порядок следующей работы
 
 1. Установить отдельную тестовую macOS 15 и собрать диагностический модуль на совместимом SDK. Первый критерий — точный PCI ID, `BOOT_0=0x137000a1` и увеличение PTIMER после загрузки без зависания.
