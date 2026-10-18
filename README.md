@@ -18,7 +18,7 @@
 | Pascal firmware/MMU/FIFO backend | Следующий этап; пока не реализован |
 | macOS Metal / framebuffer / Minecraft | Предстоят реализация и реальные испытания |
 
-[Данные аппаратной проверки](pascal/docs/BASELINE.md) · [Описание кода и сборка](pascal/README.md)
+[Данные аппаратной проверки](pascal/docs/BASELINE.md) · [Карта переноса GP107](pascal/docs/PORTING-MAP.md) · [Описание кода и сборка](pascal/README.md)
 
 ## Проверить код без macOS
 

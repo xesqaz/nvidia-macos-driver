@@ -30,6 +30,12 @@ These are results of one Linux run, not proof of macOS Metal, broad Vulkan confo
 
 This run is sufficient for stage-0 implementation and offline analysis. There is no need to repeat it just to start coding. A targeted later capture may be needed for an exact missing sequence.
 
+## GP107 graphics firmware inventory on the Linux host
+
+The installed `linux-firmware-nvidia` package contains the GP107 GR firmware files named by Nouveau: FECS and GPCCS boot, instruction, data and signature images, plus `sw_ctx`, `sw_nonctx`, `sw_bundle_init` and `sw_method_init`. The last two are symlinks into the GP102 firmware directory on this host. This confirms the files are available locally for controlled Linux-side reference work; it does not prove that the macOS driver can load or legally redistribute them.
+
+No firmware binary, compressed or unpacked, is included in this repository. Keep the blobs and their licence on the local machine. Check the package's NVIDIA licence before deciding how firmware could be supplied to a macOS installation. The GP107-to-GP102 symlink relationship is an observation about this installed package version, not a universal packaging rule.
+
 ## ROM correction
 
 The raw sysfs ROM is 58,880 bytes: a checksum-valid legacy image whose PCIR last-image bit is clear. The next image is absent. Its reported `has_gop=false` is not evidence that the card lacks an EFI image.
